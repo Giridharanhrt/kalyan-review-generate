@@ -223,6 +223,7 @@ type ShopLocation = {
     locality?: string
     city?: string
     state?: string
+    placeId?: string
     businessProfileId?: string
     latitude?: string
     longitude?: string
@@ -962,7 +963,7 @@ export function ReviewForm() {
             await saveReviewToDB(generatedReview.review)
 
             const selectedLocation = shopLocations.find(loc => loc.storeId === formData.shopLocation)
-            const placeTarget = selectedLocation?.businessProfileId || ""
+            const placeTarget = selectedLocation?.placeId || selectedLocation?.businessProfileId || ""
 
             const response = await fetch("/api/shortlink", {
                 method: "POST",
@@ -1131,6 +1132,13 @@ export function ReviewForm() {
                                     )
                                     : proximityStores
 
+                                // Separate selected store from the rest of the list
+                                const selectedStore = field.value
+                                    ? shopLocations.find(loc => loc.storeId === field.value)
+                                    : null
+
+                                const otherLocations = filteredLocations.filter(loc => loc.storeId !== field.value)
+
                                 const isNearbyMode = Boolean(customerCoords)
 
                                 return (
@@ -1171,103 +1179,148 @@ export function ReviewForm() {
                                         </div>
 
                                         <FormControl>
-                                            <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto custom-scrollbar">
-                                                {locationsLoading && (
-                                                    <div className="flex items-center justify-center py-6 gap-2 text-sm text-gray-400">
-                                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                                        Loading store locations…
-                                                    </div>
-                                                )}
-                                                {locationsError && !locationsLoading && (
-                                                    <div className="py-4 text-center">
-                                                        <p className="text-sm text-red-500 mb-2">{locationsError}</p>
+                                            <div className="space-y-2">
+                                                {/* Fixed Selected Store */}
+                                                {selectedStore && (
+                                                    <div className="pb-1">
                                                         <button
-                                                            type="button"
-                                                            onClick={async () => {
-                                                                setLocationsLoading(true)
-                                                                setLocationsError(null)
-                                                                try {
-                                                                    const res = await fetch("/api/stores")
-                                                                    if (!res.ok) throw new Error()
-                                                                    const json = await res.json()
-                                                                    const list: ShopLocation[] = Array.isArray(json) ? json : (json.data ?? [])
-                                                                    setShopLocations(list)
-                                                                } catch {
-                                                                    setLocationsError("Could not load store list. Please try again.")
-                                                                } finally {
-                                                                    setLocationsLoading(false)
-                                                                }
-                                                            }}
-                                                            className="text-xs text-violet-600 underline"
-                                                        >
-                                                            Retry
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {!locationsLoading && !locationsError && filteredLocations.map((location) => {
-                                                    const isSelected = field.value === location.storeId
-                                                    const distLabel = location.distKm !== undefined
-                                                        ? location.distKm < 1
-                                                            ? `${Math.round(location.distKm * 1000)} m`
-                                                            : `${location.distKm.toFixed(1)} km`
-                                                        : null
-                                                    return (
-                                                        <button
-                                                            key={location.storeId}
+                                                            key={selectedStore.storeId}
                                                             type="button"
                                                             onClick={() => {
-                                                                field.onChange(location.storeId)
-                                                                orgForm.setValue("storeId", location.storeId)
+                                                                field.onChange(selectedStore.storeId)
+                                                                orgForm.setValue("storeId", selectedStore.storeId)
                                                                 setLocationSearch("")
                                                             }}
-                                                            className={`
-                                                                relative p-3 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
-                                                                ${isSelected
-                                                                    ? 'bg-linear-to-r from-violet-50 to-fuchsia-50 border-violet-500 shadow-md'
-                                                                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                                                }
-                                                            `}
+                                                            className="w-full relative p-3 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer bg-linear-to-r from-violet-50 to-fuchsia-50 border-violet-500 shadow-md"
                                                         >
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <div className="flex-1 min-w-0">
-                                                                    <p className={`text-sm font-semibold ${isSelected ? 'text-violet-700' : 'text-gray-700'}`}>
-                                                                        {location.storeName}
-                                                                        <span className={`ml-2 text-xs font-normal ${isSelected ? 'text-violet-400' : 'text-gray-400'}`}>({location.storeId})</span>
+                                                                    <p className="text-sm font-semibold text-violet-700">
+                                                                        {selectedStore.storeName}
+                                                                        <span className="ml-2 text-xs font-normal text-violet-400">({selectedStore.storeId})</span>
                                                                     </p>
-                                                                    {(location.locality || location.city || location.state) && (
-                                                                        <p className={`text-xs ${isSelected ? 'text-violet-500' : 'text-gray-500'}`}>
-                                                                            {[location.locality, location.city, location.state].filter(Boolean).join(", ")}
+                                                                    {(selectedStore.locality || selectedStore.city || selectedStore.state) && (
+                                                                        <p className="text-xs text-violet-500">
+                                                                            {[selectedStore.locality, selectedStore.city, selectedStore.state].filter(Boolean).join(", ")}
                                                                         </p>
                                                                     )}
                                                                 </div>
                                                                 <div className="flex items-center gap-1.5 shrink-0">
-                                                                    {distLabel && (
-                                                                        <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${isSelected
-                                                                            ? 'bg-violet-100 text-violet-600'
-                                                                            : 'bg-green-50 text-green-600 border border-green-200'
-                                                                            }`}>
-                                                                            <MapPin className="w-2.5 h-2.5" />
-                                                                            {distLabel}
-                                                                        </span>
-                                                                    )}
-                                                                    {isSelected && (
-                                                                        <div className="w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
-                                                                            <Check className="w-3 h-3 text-white" />
-                                                                        </div>
-                                                                    )}
+                                                                    <div className="w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
+                                                                        <Check className="w-3 h-3 text-white" />
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </button>
-                                                    )
-                                                })}
-                                                {!locationsLoading && !locationsError && filteredLocations.length === 0 && (
-                                                    <p className="py-4 text-sm text-gray-400 text-center">
-                                                        {isNearbyMode && !locationSearch
-                                                            ? "No stores found within " + NEARBY_RADIUS_KM + " km of your location"
-                                                            : "No locations found"
-                                                        }
-                                                    </p>
+                                                        {otherLocations.length > 0 && (
+                                                            <div className="mt-3 mb-1 px-1 flex items-center gap-2">
+                                                                <div className="h-px flex-1 bg-gray-100" />
+                                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Other Locations</span>
+                                                                <div className="h-px flex-1 bg-gray-100" />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 )}
+
+                                                {/* Scrollable List */}
+                                                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto custom-scrollbar">
+                                                    {locationsLoading && (
+                                                        <div className="flex items-center justify-center py-6 gap-2 text-sm text-gray-400">
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                            Loading store locations…
+                                                        </div>
+                                                    )}
+                                                    {locationsError && !locationsLoading && (
+                                                        <div className="py-4 text-center">
+                                                            <p className="text-sm text-red-500 mb-2">{locationsError}</p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={async () => {
+                                                                    setLocationsLoading(true)
+                                                                    setLocationsError(null)
+                                                                    try {
+                                                                        const res = await fetch("/api/stores")
+                                                                        if (!res.ok) throw new Error()
+                                                                        const json = await res.json()
+                                                                        const list: ShopLocation[] = Array.isArray(json) ? json : (json.data ?? [])
+                                                                        setShopLocations(list)
+                                                                    } catch {
+                                                                        setLocationsError("Could not load store list. Please try again.")
+                                                                    } finally {
+                                                                        setLocationsLoading(false)
+                                                                    }
+                                                                }}
+                                                                className="text-xs text-violet-600 underline"
+                                                            >
+                                                                Retry
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {!locationsLoading && !locationsError && otherLocations.map((location) => {
+                                                        const isSelected = field.value === location.storeId
+                                                        const distLabel = location.distKm !== undefined
+                                                            ? location.distKm < 1
+                                                                ? `${Math.round(location.distKm * 1000)} m`
+                                                                : `${location.distKm.toFixed(1)} km`
+                                                            : null
+                                                        return (
+                                                            <button
+                                                                key={location.storeId}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    field.onChange(location.storeId)
+                                                                    orgForm.setValue("storeId", location.storeId)
+                                                                    setLocationSearch("")
+                                                                }}
+                                                                className={`
+                                                                relative p-3 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+                                                                ${isSelected
+                                                                        ? 'bg-linear-to-r from-violet-50 to-fuchsia-50 border-violet-500 shadow-md'
+                                                                        : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                                    }
+                                                            `}
+                                                            >
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className={`text-sm font-semibold ${isSelected ? 'text-violet-700' : 'text-gray-700'}`}>
+                                                                            {location.storeName}
+                                                                            <span className={`ml-2 text-xs font-normal ${isSelected ? 'text-violet-400' : 'text-gray-400'}`}>({location.storeId})</span>
+                                                                        </p>
+                                                                        {(location.locality || location.city || location.state) && (
+                                                                            <p className={`text-xs ${isSelected ? 'text-violet-500' : 'text-gray-500'}`}>
+                                                                                {[location.locality, location.city, location.state].filter(Boolean).join(", ")}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                                        {distLabel && (
+                                                                            <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${isSelected
+                                                                                ? 'bg-violet-100 text-violet-600'
+                                                                                : 'bg-green-50 text-green-600 border border-green-200'
+                                                                                }`}>
+                                                                                <MapPin className="w-2.5 h-2.5" />
+                                                                                {distLabel}
+                                                                            </span>
+                                                                        )}
+                                                                        {isSelected && (
+                                                                            <div className="w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
+                                                                                <Check className="w-3 h-3 text-white" />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                        )
+                                                    })}
+                                                    {!locationsLoading && !locationsError && otherLocations.length === 0 && (
+                                                        <p className="py-4 text-sm text-gray-400 text-center">
+                                                            {isNearbyMode && !locationSearch
+                                                                ? "No stores found within " + NEARBY_RADIUS_KM + " km of your location"
+                                                                : "No locations found"
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </FormControl>
                                         <FormMessage className="text-xs text-red-500" />

@@ -6,6 +6,7 @@ type StoreApiItem = {
     locality?: string;
     city?: string;
     state?: string;
+    placeId?: string;
     businessProfileId?: string;
     latitude?: string;
     longitude?: string;
@@ -41,7 +42,7 @@ export async function GET() {
         const raw: StoreApiItem[] = Array.isArray(data) ? data : (data.data ?? []);
 
         const locations = raw.map((store) => {
-            const placeId = (store.businessProfileId ?? "").trim();
+            const placeId = (store.placeId || "").trim();
             const addressParts = [store.locality, store.city, store.state].filter(Boolean);
             return {
                 value: store.storeId,
