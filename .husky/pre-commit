@@ -1,0 +1,10 @@
+# Unstage CLAUDE.md if accidentally staged
+git restore --staged CLAUDE.md 2>/dev/null || true
+
+# Run build check (skip prisma generate — client already exists in src/app/generated/prisma/)
+echo "Running build check..."
+npx next build
+if [ $? -ne 0 ]; then
+  echo "Build failed. Commit aborted."
+  exit 1
+fi

@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model CustomerReview {
+  id                       String       @id @default(uuid())
+  orgName                  String       @default("Kalyan Jewellers")
+  orgType                  String       @default("Jewellery Store")
+  attenderName             String?
+  attenderId               String?
+  shopLocation             String?
+  customerName             String
+  customerPhone            String?
+  customerFrom             String?
+  purchaseType             String       @default("")
+  satisfactionLevel        Int          @default(8)
+  keyHighlights            String?
+  improvementAreas         String?
+  recommendationLikelihood Int          @default(9)
+  events                   String?
+  brandLoyalty             String?
+  emotionalConnection      String?
+  reviewText               String       @db.Text
+  createdAt                DateTime     @default(now())
+  status                   ReviewStatus @default(PENDING)
+}
+
+model ShortLink {
+  id          String   @id @default(uuid())
+  shortCode   String   @unique @db.VarChar(10)
+  reviewText  String   @db.Text
+  customerName String
+  shopName    String?
+  productName String?
+  clicks      Int      @default(0)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime?
+  
+  @@index([shortCode])
+}
+
+enum ReviewStatus {
+  PENDING
+  SENT
+  FAILED
+}
