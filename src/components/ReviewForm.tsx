@@ -1035,7 +1035,7 @@ export function ReviewForm() {
                                     </div>
                                     <FormControl>
                                         <Input
-                                            placeholder="Enter your name (salesperson/attender)"
+                                            placeholder="Enter Employee Name"
                                             className="h-11 text-sm border-gray-200 rounded-xl focus:border-violet-500 focus:ring-violet-500/20 transition-all"
                                             {...field}
                                         />
@@ -1056,7 +1056,7 @@ export function ReviewForm() {
                                     </div>
                                     <FormControl>
                                         <Input
-                                            placeholder="Enter attender ID (e.g., KJ-1023)"
+                                            placeholder="Enter Employee ID (e.g., KJ-1023)"
                                             className="h-11 text-sm border-gray-200 rounded-xl focus:border-violet-500 focus:ring-violet-500/20 transition-all"
                                             {...field}
                                         />
