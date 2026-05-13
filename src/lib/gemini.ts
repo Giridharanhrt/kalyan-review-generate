@@ -128,7 +128,7 @@ BUSINESS:
 - Name: ${input.orgName}
 - Type: ${input.orgType}
 ${input.attenderName ? `- Served by: ${input.attenderName}` : ""}
-${input.attenderId ? `- Attender ID: ${input.attenderId}` : ""}
+${input.attenderId ? `- Employee ID: ${input.attenderId}` : ""}
 ${input.shopLocation ? `- Location: ${input.shopLocation}` : ""}
 
 CUSTOMER:

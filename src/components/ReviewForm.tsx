@@ -252,8 +252,8 @@ const MAX_NEARBY_STORES = 20   // cap list at 20 nearest stores
 const orgSchema = z.object({
     orgName: z.string().default("Kalyan Jewellers"),
     orgType: z.string().default("Jewellery Store"),
-    attenderName: z.string().min(2, "Attender name is required"),
-    attenderId: z.string().min(1, "Attender ID is required"),
+    attenderName: z.string().min(2, "Employee name is required"),
+    attenderId: z.string().min(1, "Employee ID is required"),
     attenderPhone: z.string().optional(),
     storeId: z.string().optional(),
     shopLocation: z.string().min(1, "Shop location is required"),
@@ -1031,7 +1031,7 @@ export function ReviewForm() {
                                 <FormItem className="px-5 py-4 space-y-2 hover:bg-gray-50/50 transition-colors">
                                     <div className="flex items-center gap-2 mb-1">
                                         <User className="w-4 h-4 text-violet-500" />
-                                        <FormLabel className="text-sm font-semibold text-gray-700">Attender Name *</FormLabel>
+                                        <FormLabel className="text-sm font-semibold text-gray-700">Employee Name *</FormLabel>
                                     </div>
                                     <FormControl>
                                         <Input
@@ -1052,7 +1052,7 @@ export function ReviewForm() {
                                 <FormItem className="px-5 py-4 space-y-2 hover:bg-gray-50/50 transition-colors">
                                     <div className="flex items-center gap-2 mb-1">
                                         <ClipboardCheck className="w-4 h-4 text-violet-500" />
-                                        <FormLabel className="text-sm font-semibold text-gray-700">Attender ID *</FormLabel>
+                                        <FormLabel className="text-sm font-semibold text-gray-700">Employee ID *</FormLabel>
                                     </div>
                                     <FormControl>
                                         <Input
@@ -1074,7 +1074,7 @@ export function ReviewForm() {
                                     <div className="flex items-center gap-2 mb-1">
                                         <Smartphone className="w-4 h-4 text-violet-500" />
                                         <FormLabel className="text-sm font-semibold text-gray-700">
-                                            Attender Phone <span className="text-gray-400 font-normal">(Optional)</span>
+                                            Employee Phone <span className="text-gray-400 font-normal">(Optional)</span>
                                         </FormLabel>
                                     </div>
                                     <FormControl>
