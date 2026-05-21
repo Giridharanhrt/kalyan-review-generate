@@ -1474,7 +1474,7 @@ export function ReviewForm() {
                                 type="submit"
                                 className="w-full h-12 text-sm font-bold bg-linear-to-r from-violet-500 to-fuchsia-600 hover:from-violet-600 hover:to-fuchsia-700 text-white rounded-xl shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98] group"
                             >
-                                Continue to Customer Info
+                                Continue
                                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </div>
