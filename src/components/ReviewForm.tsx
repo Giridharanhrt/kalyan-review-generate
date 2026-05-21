@@ -1562,10 +1562,18 @@ export function ReviewForm() {
 
                                     <div className="flex flex-col items-stretch justify-center gap-4 sm:gap-6 py-2 sm:py-4">
                                         <div className="w-full max-w-[150px] sm:max-w-[200px] aspect-square p-3 bg-white rounded-3xl border-2 border-violet-100 shadow-xl shadow-violet-500/5 relative group transition-all duration-300 hover:border-violet-500 flex items-center justify-center shrink-0 mx-auto">
-                                            <QRCode value={getQRLink()} size={256} className="w-full h-full" style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
+                                            <QRCode
+                                                value={getQRLink()}
+                                                size={256}
+                                                level="H"
+                                                className="w-full h-full"
+                                                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                            />
+                                            {/* Centered Logo with White Border */}
+                                            <div className="absolute w-[36px] h-[36px] bg-white p-0.5 rounded-lg shadow-md flex items-center justify-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none">
+                                                <BrandLogo size={28} className="rounded-md w-full h-full object-contain" />
+                                            </div>
                                         </div>
-
-
                                     </div>
 
                                 </DialogContent>
