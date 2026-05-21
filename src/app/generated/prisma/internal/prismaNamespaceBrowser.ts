@@ -91,7 +91,8 @@ export const CustomerReviewScalarFieldEnum = {
   emotionalConnection: 'emotionalConnection',
   reviewText: 'reviewText',
   createdAt: 'createdAt',
-  status: 'status'
+  status: 'status',
+  type: 'type'
 } as const
 
 export type CustomerReviewScalarFieldEnum = (typeof CustomerReviewScalarFieldEnum)[keyof typeof CustomerReviewScalarFieldEnum]
