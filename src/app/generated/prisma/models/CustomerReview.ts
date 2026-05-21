@@ -57,6 +57,7 @@ export type CustomerReviewMinAggregateOutputType = {
   reviewText: string | null
   createdAt: Date | null
   status: $Enums.ReviewStatus | null
+  type: string | null
 }
 
 export type CustomerReviewMaxAggregateOutputType = {
@@ -80,6 +81,7 @@ export type CustomerReviewMaxAggregateOutputType = {
   reviewText: string | null
   createdAt: Date | null
   status: $Enums.ReviewStatus | null
+  type: string | null
 }
 
 export type CustomerReviewCountAggregateOutputType = {
@@ -103,6 +105,7 @@ export type CustomerReviewCountAggregateOutputType = {
   reviewText: number
   createdAt: number
   status: number
+  type: number
   _all: number
 }
 
@@ -138,6 +141,7 @@ export type CustomerReviewMinAggregateInputType = {
   reviewText?: true
   createdAt?: true
   status?: true
+  type?: true
 }
 
 export type CustomerReviewMaxAggregateInputType = {
@@ -161,6 +165,7 @@ export type CustomerReviewMaxAggregateInputType = {
   reviewText?: true
   createdAt?: true
   status?: true
+  type?: true
 }
 
 export type CustomerReviewCountAggregateInputType = {
@@ -184,6 +189,7 @@ export type CustomerReviewCountAggregateInputType = {
   reviewText?: true
   createdAt?: true
   status?: true
+  type?: true
   _all?: true
 }
 
@@ -294,6 +300,7 @@ export type CustomerReviewGroupByOutputType = {
   reviewText: string
   createdAt: Date
   status: $Enums.ReviewStatus
+  type: string | null
   _count: CustomerReviewCountAggregateOutputType | null
   _avg: CustomerReviewAvgAggregateOutputType | null
   _sum: CustomerReviewSumAggregateOutputType | null
@@ -301,7 +308,7 @@ export type CustomerReviewGroupByOutputType = {
   _max: CustomerReviewMaxAggregateOutputType | null
 }
 
-type GetCustomerReviewGroupByPayload<T extends CustomerReviewGroupByArgs> = Prisma.PrismaPromise<
+export type GetCustomerReviewGroupByPayload<T extends CustomerReviewGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<CustomerReviewGroupByOutputType, T['by']> &
       {
@@ -340,6 +347,7 @@ export type CustomerReviewWhereInput = {
   reviewText?: Prisma.StringFilter<"CustomerReview"> | string
   createdAt?: Prisma.DateTimeFilter<"CustomerReview"> | Date | string
   status?: Prisma.EnumReviewStatusFilter<"CustomerReview"> | $Enums.ReviewStatus
+  type?: Prisma.StringNullableFilter<"CustomerReview"> | string | null
 }
 
 export type CustomerReviewOrderByWithRelationInput = {
@@ -363,6 +371,7 @@ export type CustomerReviewOrderByWithRelationInput = {
   reviewText?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  type?: Prisma.SortOrderInput | Prisma.SortOrder
 }
 
 export type CustomerReviewWhereUniqueInput = Prisma.AtLeast<{
@@ -389,6 +398,7 @@ export type CustomerReviewWhereUniqueInput = Prisma.AtLeast<{
   reviewText?: Prisma.StringFilter<"CustomerReview"> | string
   createdAt?: Prisma.DateTimeFilter<"CustomerReview"> | Date | string
   status?: Prisma.EnumReviewStatusFilter<"CustomerReview"> | $Enums.ReviewStatus
+  type?: Prisma.StringNullableFilter<"CustomerReview"> | string | null
 }, "id">
 
 export type CustomerReviewOrderByWithAggregationInput = {
@@ -412,6 +422,7 @@ export type CustomerReviewOrderByWithAggregationInput = {
   reviewText?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  type?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.CustomerReviewCountOrderByAggregateInput
   _avg?: Prisma.CustomerReviewAvgOrderByAggregateInput
   _max?: Prisma.CustomerReviewMaxOrderByAggregateInput
@@ -443,6 +454,7 @@ export type CustomerReviewScalarWhereWithAggregatesInput = {
   reviewText?: Prisma.StringWithAggregatesFilter<"CustomerReview"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CustomerReview"> | Date | string
   status?: Prisma.EnumReviewStatusWithAggregatesFilter<"CustomerReview"> | $Enums.ReviewStatus
+  type?: Prisma.StringNullableWithAggregatesFilter<"CustomerReview"> | string | null
 }
 
 export type CustomerReviewCreateInput = {
@@ -466,6 +478,7 @@ export type CustomerReviewCreateInput = {
   reviewText: string
   createdAt?: Date | string
   status?: $Enums.ReviewStatus
+  type?: string | null
 }
 
 export type CustomerReviewUncheckedCreateInput = {
@@ -489,6 +502,7 @@ export type CustomerReviewUncheckedCreateInput = {
   reviewText: string
   createdAt?: Date | string
   status?: $Enums.ReviewStatus
+  type?: string | null
 }
 
 export type CustomerReviewUpdateInput = {
@@ -512,6 +526,7 @@ export type CustomerReviewUpdateInput = {
   reviewText?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumReviewStatusFieldUpdateOperationsInput | $Enums.ReviewStatus
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type CustomerReviewUncheckedUpdateInput = {
@@ -535,6 +550,7 @@ export type CustomerReviewUncheckedUpdateInput = {
   reviewText?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumReviewStatusFieldUpdateOperationsInput | $Enums.ReviewStatus
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type CustomerReviewCreateManyInput = {
@@ -558,6 +574,7 @@ export type CustomerReviewCreateManyInput = {
   reviewText: string
   createdAt?: Date | string
   status?: $Enums.ReviewStatus
+  type?: string | null
 }
 
 export type CustomerReviewUpdateManyMutationInput = {
@@ -581,6 +598,7 @@ export type CustomerReviewUpdateManyMutationInput = {
   reviewText?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumReviewStatusFieldUpdateOperationsInput | $Enums.ReviewStatus
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type CustomerReviewUncheckedUpdateManyInput = {
@@ -604,6 +622,7 @@ export type CustomerReviewUncheckedUpdateManyInput = {
   reviewText?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumReviewStatusFieldUpdateOperationsInput | $Enums.ReviewStatus
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type CustomerReviewCountOrderByAggregateInput = {
@@ -627,6 +646,7 @@ export type CustomerReviewCountOrderByAggregateInput = {
   reviewText?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  type?: Prisma.SortOrder
 }
 
 export type CustomerReviewAvgOrderByAggregateInput = {
@@ -655,6 +675,7 @@ export type CustomerReviewMaxOrderByAggregateInput = {
   reviewText?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  type?: Prisma.SortOrder
 }
 
 export type CustomerReviewMinOrderByAggregateInput = {
@@ -678,6 +699,7 @@ export type CustomerReviewMinOrderByAggregateInput = {
   reviewText?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  type?: Prisma.SortOrder
 }
 
 export type CustomerReviewSumOrderByAggregateInput = {
@@ -732,6 +754,7 @@ export type CustomerReviewSelect<ExtArgs extends runtime.Types.Extensions.Intern
   reviewText?: boolean
   createdAt?: boolean
   status?: boolean
+  type?: boolean
 }, ExtArgs["result"]["customerReview"]>
 
 export type CustomerReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -755,6 +778,7 @@ export type CustomerReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   reviewText?: boolean
   createdAt?: boolean
   status?: boolean
+  type?: boolean
 }, ExtArgs["result"]["customerReview"]>
 
 export type CustomerReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -778,6 +802,7 @@ export type CustomerReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   reviewText?: boolean
   createdAt?: boolean
   status?: boolean
+  type?: boolean
 }, ExtArgs["result"]["customerReview"]>
 
 export type CustomerReviewSelectScalar = {
@@ -801,9 +826,10 @@ export type CustomerReviewSelectScalar = {
   reviewText?: boolean
   createdAt?: boolean
   status?: boolean
+  type?: boolean
 }
 
-export type CustomerReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orgName" | "orgType" | "attenderName" | "attenderId" | "shopLocation" | "customerName" | "customerPhone" | "customerFrom" | "purchaseType" | "satisfactionLevel" | "keyHighlights" | "improvementAreas" | "recommendationLikelihood" | "events" | "brandLoyalty" | "emotionalConnection" | "reviewText" | "createdAt" | "status", ExtArgs["result"]["customerReview"]>
+export type CustomerReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orgName" | "orgType" | "attenderName" | "attenderId" | "shopLocation" | "customerName" | "customerPhone" | "customerFrom" | "purchaseType" | "satisfactionLevel" | "keyHighlights" | "improvementAreas" | "recommendationLikelihood" | "events" | "brandLoyalty" | "emotionalConnection" | "reviewText" | "createdAt" | "status" | "type", ExtArgs["result"]["customerReview"]>
 
 export type $CustomerReviewPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "CustomerReview"
@@ -829,6 +855,7 @@ export type $CustomerReviewPayload<ExtArgs extends runtime.Types.Extensions.Inte
     reviewText: string
     createdAt: Date
     status: $Enums.ReviewStatus
+    type: string | null
   }, ExtArgs["result"]["customerReview"]>
   composites: {}
 }
@@ -1272,6 +1299,7 @@ export interface CustomerReviewFieldRefs {
   readonly reviewText: Prisma.FieldRef<"CustomerReview", 'String'>
   readonly createdAt: Prisma.FieldRef<"CustomerReview", 'DateTime'>
   readonly status: Prisma.FieldRef<"CustomerReview", 'ReviewStatus'>
+  readonly type: Prisma.FieldRef<"CustomerReview", 'String'>
 }
     
 
@@ -1448,6 +1476,11 @@ export type CustomerReviewFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Skip the first `n` CustomerReviews.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of CustomerReviews.
+   */
   distinct?: Prisma.CustomerReviewScalarFieldEnum | Prisma.CustomerReviewScalarFieldEnum[]
 }
 

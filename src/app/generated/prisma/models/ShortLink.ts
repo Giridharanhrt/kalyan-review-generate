@@ -220,7 +220,7 @@ export type ShortLinkGroupByOutputType = {
   _max: ShortLinkMaxAggregateOutputType | null
 }
 
-type GetShortLinkGroupByPayload<T extends ShortLinkGroupByArgs> = Prisma.PrismaPromise<
+export type GetShortLinkGroupByPayload<T extends ShortLinkGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ShortLinkGroupByOutputType, T['by']> &
       {
@@ -1114,6 +1114,11 @@ export type ShortLinkFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Skip the first `n` ShortLinks.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of ShortLinks.
+   */
   distinct?: Prisma.ShortLinkScalarFieldEnum | Prisma.ShortLinkScalarFieldEnum[]
 }
 

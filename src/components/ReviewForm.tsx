@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
+import QRCode from "react-qr-code"
 import {
     Dialog,
     DialogContent,
@@ -54,7 +55,8 @@ import {
     ClipboardCheck,
     ChevronDown,
     Search,
-    MapPin
+    MapPin,
+    QrCode
 } from "lucide-react"
 
 // Country codes with flags
@@ -692,14 +694,60 @@ const SHOP_LOCATION_STORAGE_KEY = "kalyan_review_shop_location"
 const DEFAULT_ORG_NAME = "Kalyan Jewellers"
 const DEFAULT_ORG_TYPE = "Jewellery Store"
 
+const copyToClipboard = async (text: string): Promise<boolean> => {
+    if (typeof window === "undefined") return false
+
+    // Try standard Clipboard API if available and in secure context
+    if (navigator.clipboard && window.isSecureContext) {
+        try {
+            await navigator.clipboard.writeText(text)
+            return true
+        } catch (err) {
+            console.error("Clipboard API failed, trying fallback:", err)
+        }
+    }
+
+    // Fallback using older execCommand method (supports http/insecure contexts)
+    try {
+        const textArea = document.createElement("textarea")
+        textArea.value = text
+
+        // Hide textarea offscreen
+        textArea.style.position = "fixed"
+        textArea.style.top = "0"
+        textArea.style.left = "0"
+        textArea.style.width = "2em"
+        textArea.style.height = "2em"
+        textArea.style.padding = "0"
+        textArea.style.border = "none"
+        textArea.style.outline = "none"
+        textArea.style.boxShadow = "none"
+        textArea.style.background = "transparent"
+
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+
+        const successful = document.execCommand("copy")
+        document.body.removeChild(textArea)
+        return successful
+    } catch (err) {
+        console.error("Fallback copy failed:", err)
+        return false
+    }
+}
+
 export function ReviewForm() {
     const [currentStep, setCurrentStep] = useState<Step>(1)
     const [isGenerating, setIsGenerating] = useState(false)
+    const [isFromQR, setIsFromQR] = useState(false)
     const [generatedReview, setGeneratedReview] = useState<GeneratedReview | null>(null)
     const [formData, setFormData] = useState<FormData>({})
     const [savedReviewId, setSavedReviewId] = useState<string | null>(null)
     const [regenerateModalOpen, setRegenerateModalOpen] = useState(false)
-    const [improvementHint, setImprovementHint] = useState("")
+    const [improvementHint, setImprovementHint] = useState("");
+    const [showChoiceModal, setShowChoiceModal] = useState(false);
+    const [showQR, setShowQR] = useState(false);
     const [regeneratingTarget, setRegeneratingTarget] = useState<"review" | null>(null)
     const [copiedReview, setCopiedReview] = useState(false)
     const [smartLink, setSmartLink] = useState<string | null>(null)
@@ -751,7 +799,7 @@ export function ReviewForm() {
         localStorage.setItem(STORE_ID_STORAGE_KEY, values.storeId || "")
         localStorage.setItem(SHOP_LOCATION_STORAGE_KEY, values.shopLocation)
         setFormData((prev: FormData) => ({ ...prev, ...values }))
-        setCurrentStep(2)
+        setShowChoiceModal(true)
     }
 
     // Fetch customer's current GPS coordinates on mount
@@ -795,35 +843,83 @@ export function ReviewForm() {
     }, [])
 
     useEffect(() => {
+        if (typeof window === "undefined") return
+
+        // 1. Check query parameters first
+        const params = new URLSearchParams(window.location.search)
+        const paramAttenderName = params.get("attenderName")?.trim()
+        const paramAttenderId = params.get("attenderId")?.trim()
+        const paramAttenderPhone = params.get("attenderPhone")?.trim() || ""
+        const paramStoreId = params.get("storeId")?.trim() || ""
+        const paramShopLocation = params.get("shopLocation")?.trim()
+
+        if (paramAttenderName && paramAttenderId && paramShopLocation) {
+            setIsFromQR(true)
+            orgForm.reset({
+                orgName: DEFAULT_ORG_NAME,
+                orgType: DEFAULT_ORG_TYPE,
+                attenderName: paramAttenderName,
+                attenderId: paramAttenderId,
+                attenderPhone: paramAttenderPhone,
+                storeId: paramStoreId,
+                shopLocation: paramShopLocation,
+            })
+            setFormData((prev: FormData) => ({
+                ...prev,
+                orgName: DEFAULT_ORG_NAME,
+                orgType: DEFAULT_ORG_TYPE,
+                attenderName: paramAttenderName,
+                attenderId: paramAttenderId,
+                attenderPhone: paramAttenderPhone,
+                storeId: paramStoreId,
+                shopLocation: paramShopLocation,
+            }))
+            setCurrentStep(2)
+            return
+        }
+
+        // 2. Fallback to localStorage
         const savedAttenderName = localStorage.getItem(STAFF_NAME_STORAGE_KEY)?.trim() || ""
         const savedAttenderId = localStorage.getItem(STAFF_ID_STORAGE_KEY)?.trim() || ""
         const savedAttenderPhone = localStorage.getItem(STAFF_PHONE_STORAGE_KEY) || ""
         const savedStoreId = localStorage.getItem(STORE_ID_STORAGE_KEY)?.trim() || ""
         const savedShopLocation = localStorage.getItem(SHOP_LOCATION_STORAGE_KEY)?.trim() || ""
-        if (!savedAttenderName || !savedAttenderId || !savedShopLocation) return
 
-        orgForm.reset({
-            orgName: DEFAULT_ORG_NAME,
-            orgType: DEFAULT_ORG_TYPE,
-            attenderName: savedAttenderName,
-            attenderId: savedAttenderId,
-            attenderPhone: savedAttenderPhone,
-            storeId: savedStoreId,
-            shopLocation: savedShopLocation,
-        })
-
-        setFormData((prev: FormData) => ({
-            ...prev,
-            orgName: DEFAULT_ORG_NAME,
-            orgType: DEFAULT_ORG_TYPE,
-            attenderName: savedAttenderName,
-            attenderId: savedAttenderId,
-            attenderPhone: savedAttenderPhone,
-            storeId: savedStoreId,
-            shopLocation: savedShopLocation,
-        }))
-        setCurrentStep(2)
+        if (savedAttenderName && savedAttenderId && savedShopLocation) {
+            orgForm.reset({
+                orgName: DEFAULT_ORG_NAME,
+                orgType: DEFAULT_ORG_TYPE,
+                attenderName: savedAttenderName,
+                attenderId: savedAttenderId,
+                attenderPhone: savedAttenderPhone,
+                storeId: savedStoreId,
+                shopLocation: savedShopLocation,
+            })
+            setFormData((prev: FormData) => ({
+                ...prev,
+                orgName: DEFAULT_ORG_NAME,
+                orgType: DEFAULT_ORG_TYPE,
+                attenderName: savedAttenderName,
+                attenderId: savedAttenderId,
+                attenderPhone: savedAttenderPhone,
+                storeId: savedStoreId,
+                shopLocation: savedShopLocation,
+            }))
+            setCurrentStep(2)
+        }
     }, [orgForm])
+
+    const getQRLink = () => {
+        if (typeof window === "undefined") return ""
+        const params = new URLSearchParams()
+        params.set("attenderName", orgForm.getValues("attenderName") || "")
+        params.set("attenderId", orgForm.getValues("attenderId") || "")
+        params.set("attenderPhone", orgForm.getValues("attenderPhone") || "")
+        params.set("storeId", orgForm.getValues("storeId") || "")
+        params.set("shopLocation", orgForm.getValues("shopLocation") || "")
+
+        return `${window.location.origin}${window.location.pathname}?${params.toString()}`
+    }
 
     const onCustomerSubmit = async (values: z.infer<typeof customerSchema>) => {
         const fullData = {
@@ -867,7 +963,11 @@ export function ReviewForm() {
             const res = await fetch("/api/reviews", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...formData, reviewText }),
+                body: JSON.stringify({
+                    ...formData,
+                    reviewText,
+                    type: isFromQR ? "QR" : "MANUAL"
+                }),
             })
             if (res.ok) {
                 const { id } = await res.json()
@@ -997,6 +1097,46 @@ export function ReviewForm() {
             if (error instanceof Error) {
                 alert(error.message)
             }
+        } finally {
+            setIsCreatingLink(false)
+        }
+    }
+
+    const handleGoogleReviewRedirect = async () => {
+        if (!generatedReview) return
+
+        // 1. Copy to clipboard immediately (highly robust on iOS/Safari within synchronous event context)
+        const copied = await copyToClipboard(generatedReview.review)
+        if (copied) {
+            setCopiedReview(true)
+            setTimeout(() => setCopiedReview(false), 3000)
+        }
+
+        setIsCreatingLink(true)
+        try {
+            // 2. Save review to database
+            await saveReviewToDB(generatedReview.review)
+
+            const selectedLocation = shopLocations.find(loc => loc.storeId === formData.shopLocation)
+            const placeTarget = selectedLocation?.placeId || selectedLocation?.businessProfileId || ""
+
+            if (placeTarget) {
+                const encodedPlaceId = encodeURIComponent(placeTarget)
+                const googleWriteReviewUrl = `https://search.google.com/local/writereview?placeid=${encodedPlaceId}`
+
+                // Redirect user to the Google Review page
+                setTimeout(() => {
+                    window.location.href = googleWriteReviewUrl
+                }, 800)
+            } else {
+                if (!copied) {
+                    alert("Review text generated! Please copy the review using the Copy button above.")
+                } else {
+                    alert("Google review link not configured for this location yet. The review has been copied to your clipboard!")
+                }
+            }
+        } catch (error) {
+            console.error("Google redirect failed:", error)
         } finally {
             setIsCreatingLink(false)
         }
@@ -1334,10 +1474,111 @@ export function ReviewForm() {
                                 type="submit"
                                 className="w-full h-12 text-sm font-bold bg-linear-to-r from-violet-500 to-fuchsia-600 hover:from-violet-600 hover:to-fuchsia-700 text-white rounded-xl shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98] group"
                             >
-                                Continue to Customer Info
+                                Continue
                                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </div>
+
+                        {showChoiceModal && (
+                            <Dialog open={showChoiceModal} onOpenChange={setShowChoiceModal}>
+                                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md mx-auto bg-white/95 backdrop-blur-xl border border-gray-100 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
+                                    <DialogHeader className="space-y-2 pb-4">
+                                        <DialogTitle className="text-xl font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent flex items-center gap-2">
+                                            <Sparkles className="w-5 h-5 text-violet-500 animate-pulse" />
+                                            Select Verification Flow
+                                        </DialogTitle>
+                                        <DialogDescription className="text-sm text-gray-500">
+                                            Choose how you want to collect the customer's details and generate their review.
+                                        </DialogDescription>
+                                    </DialogHeader>
+
+                                    <div className="grid grid-cols-1 gap-3 py-2">
+                                        {/* QR Option */}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowQR(true);
+                                                setShowChoiceModal(false);
+                                            }}
+                                            className="w-full relative p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 border-gray-100 bg-white hover:border-violet-500 hover:bg-violet-50/50 transition-all duration-300 text-left group flex items-start gap-3 sm:gap-4 cursor-pointer hover:shadow-lg hover:shadow-violet-500/5 active:scale-[0.98]"
+                                        >
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-violet-100 flex items-center justify-center text-violet-600 group-hover:bg-violet-500 group-hover:text-white transition-all duration-300 shadow-sm shrink-0">
+                                                <QrCode className="w-5 h-5 sm:w-6 sm:h-6" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-sm font-bold text-gray-800 group-hover:text-violet-700 transition-colors">
+                                                    QR Code
+                                                </h4>
+                                                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                                                    Generate a QR code for the customer to scan. They can fill the details directly on their own mobile phone.
+                                                </p>
+                                            </div>
+                                            <div className="self-center shrink-0">
+                                                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-violet-500 group-hover:translate-x-1 transition-all" />
+                                            </div>
+                                        </button>
+
+                                        {/* Manual Option */}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowChoiceModal(false);
+                                                setCurrentStep(2);
+                                            }}
+                                            className="w-full relative p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 border-gray-100 bg-white hover:border-fuchsia-500 hover:bg-fuchsia-50/50 transition-all duration-300 text-left group flex items-start gap-3 sm:gap-4 cursor-pointer hover:shadow-lg hover:shadow-fuchsia-500/5 active:scale-[0.98]"
+                                        >
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-fuchsia-100 flex items-center justify-center text-fuchsia-600 group-hover:bg-fuchsia-500 group-hover:text-white transition-all duration-300 shadow-sm shrink-0">
+                                                <Smartphone className="w-5 h-5 sm:w-6 sm:h-6" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-sm font-bold text-gray-800 group-hover:text-fuchsia-700 transition-colors">
+                                                    Manual Entry
+                                                </h4>
+                                                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                                                    Continue filling the customer details on this device. Perfect if you are assisting the customer directly.
+                                                </p>
+                                            </div>
+                                            <div className="self-center shrink-0">
+                                                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-fuchsia-500 group-hover:translate-x-1 transition-all" />
+                                            </div>
+                                        </button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        )}
+
+                        {showQR && (
+                            <Dialog open={showQR} onOpenChange={setShowQR}>
+                                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md mx-auto bg-white/95 backdrop-blur-xl border border-gray-100 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
+                                    <DialogHeader className="space-y-2 pb-2 text-center">
+                                        <DialogTitle className="text-xl font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent flex items-center justify-center gap-2">
+                                            <QrCode className="w-5 h-5 text-violet-500" />
+                                            Customer QR Code
+                                        </DialogTitle>
+                                        <DialogDescription className="text-sm text-gray-500">
+                                            Ask the customer to scan this QR code on their mobile device to open the form.
+                                        </DialogDescription>
+                                    </DialogHeader>
+
+                                    <div className="flex flex-col items-stretch justify-center gap-4 sm:gap-6 py-2 sm:py-4">
+                                        <div className="w-full max-w-[150px] sm:max-w-[200px] aspect-square p-3 bg-white rounded-3xl border-2 border-violet-100 shadow-xl shadow-violet-500/5 relative group transition-all duration-300 hover:border-violet-500 flex items-center justify-center shrink-0 mx-auto">
+                                            <QRCode
+                                                value={getQRLink()}
+                                                size={256}
+                                                level="H"
+                                                className="w-full h-full"
+                                                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                            />
+                                            {/* Centered Logo with White Border */}
+                                            <div className="absolute w-[36px] h-[36px] bg-white p-0.5 rounded-lg shadow-md flex items-center justify-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none">
+                                                <BrandLogo size={28} className="rounded-md w-full h-full object-contain" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </DialogContent>
+                            </Dialog>
+                        )}
                     </form>
                 </Form>
             </div>
@@ -1348,7 +1589,7 @@ export function ReviewForm() {
     if (currentStep === 2) {
         return (
             <div className="form-container" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
-                <StepIndicator currentStep={currentStep} />
+                {!isFromQR && <StepIndicator currentStep={currentStep} />}
 
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -1363,7 +1604,7 @@ export function ReviewForm() {
                 </div>
 
                 <Form {...customerForm}>
-                    <form onSubmit={customerForm.handleSubmit(onCustomerSubmit)} className="custom-scrollbar" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
+                    <form onSubmit={customerForm.handleSubmit(onCustomerSubmit)} className="custom-scrollbar overflow-y-auto max-h-[60vh] md:max-h-[calc(100vh-280px)] lg:max-h-[calc(100vh-320px)]">
                         <div className="px-5 py-4 space-y-4">
                             <FormField
                                 control={customerForm.control}
@@ -1623,19 +1864,21 @@ export function ReviewForm() {
                                 <p className="text-xs text-red-500 text-center">{customerForm.formState.errors.root.message}</p>
                             )}
                             <div className="flex gap-3">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={goBack}
-                                    className="flex-1 h-12 text-sm font-semibold rounded-xl border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition-all"
-                                >
-                                    <ArrowLeft className="mr-2 w-4 h-4" />
-                                    Back
-                                </Button>
+                                {!isFromQR && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={goBack}
+                                        className="flex-1 h-12 text-sm font-semibold rounded-xl border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition-all"
+                                    >
+                                        <ArrowLeft className="mr-2 w-4 h-4" />
+                                        Back
+                                    </Button>
+                                )}
                                 <Button
                                     type="submit"
                                     disabled={isGenerating}
-                                    className="flex-2 h-12 text-sm font-bold bg-linear-to-r from-violet-500 via-fuchsia-500 to-pink-500 hover:from-violet-600 hover:via-fuchsia-600 hover:to-pink-600 text-white rounded-xl shadow-lg shadow-violet-500/30 transition-all active:scale-[0.98] group"
+                                    className={`${isFromQR ? "w-full" : "flex-2"} h-12 text-sm font-bold bg-linear-to-r from-violet-500 via-fuchsia-500 to-pink-500 hover:from-violet-600 hover:via-fuchsia-600 hover:to-pink-600 text-white rounded-xl shadow-lg shadow-violet-500/30 transition-all active:scale-[0.98] group`}
                                 >
                                     {isGenerating ? (
                                         <>
@@ -1661,11 +1904,11 @@ export function ReviewForm() {
     if (currentStep === 3 && generatedReview) {
         return (
             <div className="form-container" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
-                <StepIndicator currentStep={currentStep} />
+                {!isFromQR && <StepIndicator currentStep={currentStep} />}
 
                 {/* Regenerate Modal */}
                 <Dialog open={regenerateModalOpen} onOpenChange={setRegenerateModalOpen}>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md mx-auto">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <RefreshCw className="w-5 h-5 text-violet-600" />
@@ -1761,11 +2004,13 @@ export function ReviewForm() {
                             </Button>
                             <Button
                                 variant="outline"
-                                onClick={() => {
+                                onClick={async () => {
                                     saveReviewToDB(generatedReview.review)
-                                    navigator.clipboard.writeText(generatedReview.review)
-                                    setCopiedReview(true)
-                                    setTimeout(() => setCopiedReview(false), 2000)
+                                    const copied = await copyToClipboard(generatedReview.review)
+                                    if (copied) {
+                                        setCopiedReview(true)
+                                        setTimeout(() => setCopiedReview(false), 2000)
+                                    }
                                 }}
                                 className="flex-1 h-11 text-sm font-semibold rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
                             >
@@ -1784,41 +2029,76 @@ export function ReviewForm() {
                         </div>
                     </div>
 
-                    {/* Send Smart Link via WhatsApp */}
-                    <div className="bg-linear-to-br from-green-50 to-emerald-50 rounded-2xl p-5 border border-green-200">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30">
-                                <Share2 className="w-5 h-5 text-white" />
+                    {/* Direct Google Review or Send Smart Link via WhatsApp based on flow */}
+                    {isFromQR ? (
+                        <div className="bg-linear-to-br from-violet-50 to-pink-50 rounded-2xl p-5 border border-violet-200">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-violet-500 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-lg shadow-violet-500/30 animate-pulse">
+                                    <Star className="w-5 h-5 text-white fill-white" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-gray-800">Submit Review to Google</p>
+                                    <p className="text-[11px] text-gray-500">Copies your review & opens Google Review page</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-sm font-bold text-gray-800">Send to Customer via WhatsApp</p>
-                                <p className="text-[11px] text-gray-500">Creates a smart link: copies review + opens Google Reviews</p>
-                            </div>
-                        </div>
-                        <Button
-                            onClick={createSmartLink}
-                            disabled={isCreatingLink}
-                            className="w-full h-12 text-sm font-bold bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl shadow-lg shadow-green-500/30 transition-all active:scale-[0.98] cursor-pointer group"
-                        >
-                            {isCreatingLink ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Creating smart link...
-                                </>
-                            ) : (
-                                <>
-                                    <Share2 className="w-4 h-4 mr-2" />
-                                    Send Review Link on WhatsApp
-                                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                                </>
-                            )}
-                        </Button>
-                        {smartLink && (
-                            <p className="text-xs text-green-700 mt-2 text-center font-medium">
-                                Link created and sent!
+                            <Button
+                                onClick={handleGoogleReviewRedirect}
+                                disabled={isCreatingLink}
+                                className="w-full h-12 text-sm font-bold bg-linear-to-r from-violet-500 via-fuchsia-500 to-pink-500 hover:from-violet-600 hover:via-fuchsia-600 hover:to-pink-600 text-white rounded-xl shadow-lg shadow-violet-500/30 transition-all active:scale-[0.98] cursor-pointer group"
+                            >
+                                {isCreatingLink ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Redirecting to Google...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
+                                        Copy & Open Google Review
+                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
+                            </Button>
+                            <p className="text-[10px] text-gray-400 mt-2 text-center">
+                                Review is copied to your clipboard. Just long press and paste!
                             </p>
-                        )}
-                    </div>
+                        </div>
+                    ) : (
+                        <div className="bg-linear-to-br from-green-50 to-emerald-50 rounded-2xl p-5 border border-green-200">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+                                    <Share2 className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-gray-800">Send to Customer via WhatsApp</p>
+                                    <p className="text-[11px] text-gray-500">Creates a smart link: copies review + opens Google Reviews</p>
+                                </div>
+                            </div>
+                            <Button
+                                onClick={createSmartLink}
+                                disabled={isCreatingLink}
+                                className="w-full h-12 text-sm font-bold bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl shadow-lg shadow-green-500/30 transition-all active:scale-[0.98] cursor-pointer group"
+                            >
+                                {isCreatingLink ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Creating smart link...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Share2 className="w-4 h-4 mr-2" />
+                                        Send Review Link on WhatsApp
+                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
+                            </Button>
+                            {smartLink && (
+                                <p className="text-xs text-green-700 mt-2 text-center font-medium">
+                                    Link created and sent!
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     <Button
                         variant="ghost"
